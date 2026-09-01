@@ -1,0 +1,140 @@
+Folder PATH listing for volume New Volume
+Volume serial number is CC69-99CC
+D:.
+|   .env.example
+|   .gitignore
+|   bun.lock
+|   INTEGRATION.md
+|   metadata.json
+|   package-lock.json
+|   package.json
+|   project-files.txt
+|   README.md
+|   server.js
+|   
++---.github
+|   |   CODEOWNERS
+|   |   
+|   \---workflows
+|           ci.yml
+|           semgrep.yml
+|           
++---backend
+|   |   .gitignore
+|   |   .gitkeep
+|   |   package.json
+|   |   prisma.config.ts
+|   |   
+|   +---prisma
+|   |   |   schema.prisma
+|   |   |   seed-test-passwords.js
+|   |   |   seed.js
+|   |   |   
+|   |   \---migrations
+|   |       |   migration_lock.toml
+|   |       |   
+|   |       +---20260822164254_init
+|   |       |       migration.sql
+|   |       |       
+|   |       +---20260823033358_fix_roles_and_relations
+|   |       |       migration.sql
+|   |       |       
+|   |       +---20260829145000_add_complaint_location_fields
+|   |       |       migration.sql
+|   |       |       
+|   |       \---20260830100000_add_requester_contact_and_intercom
+|   |               migration.sql
+|   |               
+|   +---src
+|   |   |   app.js
+|   |   |   server.js
+|   |   |   
+|   |   +---config
+|   |   |       db.js
+|   |   |       
+|   |   +---controllers
+|   |   |       approvalController.js
+|   |   |       authController.js
+|   |   |       complaintController.js
+|   |   |       complaintStatusController.js
+|   |   |       healthController.js
+|   |   |       jobController.js
+|   |   |       ticketController.js
+|   |   |       verificationController.js
+|   |   |       
+|   |   +---middleware
+|   |   |       authMiddleware.js
+|   |   |       
+|   |   \---routes
+|   |           approvalRoutes.js
+|   |           authRoutes.js
+|   |           complaintRoutes.js
+|   |           complaintStatusRoutes.js
+|   |           healthRoutes.js
+|   |           jobRoutes.js
+|   |           ticketRoutes.js
+|   |           verificationRoutes.js
+|   |           
+|   \---test
+|           auth-and-ticket.test.js
+|           full-workflow.test.js
+|           
++---database
+|       .gitignore
+|       package.json
+|       prisma.config.ts
+|       skills-lock.json
+|       
+\---frontend
+    |   .env.example
+    |   eslint.config.js
+    |   index.html
+    |   package.json
+    |   vite.config.js
+    |   
+    +---public
+    |   \---assets
+    |           panimalar-badge.jpeg
+    |           panimalar-logo.png
+    |           
+    \---src
+        |   main.jsx
+        |   styles.css
+        |   
+        +---components
+        |       Badge.jsx
+        |       Button.jsx
+        |       Card.jsx
+        |       ConfirmationDialog.jsx
+        |       DashboardLayout.jsx
+        |       EmptyState.jsx
+        |       Input.jsx
+        |       Modal.jsx
+        |       Navbar.jsx
+        |       PageHeader.jsx
+        |       PanimalarLogo.jsx
+        |       Sidebar.jsx
+        |       Toast.jsx
+        |       WorkflowTracker.jsx
+        |       
+        +---context
+        |       AuthContext.jsx
+        |       
+        +---pages
+        |       AllocatedWorkTrackingPage.jsx
+        |       AssignElectricianPage.jsx
+        |       HodApprovalsPage.jsx
+        |       LoginPage.jsx
+        |       MyComplaintsPage.jsx
+        |       MyJobsPage.jsx
+        |       RaiseComplaintPage.jsx
+        |       
+        \---services
+                api.js
+                api.test.js
+                approvalService.js
+                authService.js
+                complaintService.js
+                jobService.js
+                ticketService.js
+                

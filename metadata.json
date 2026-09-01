@@ -1,0 +1,8 @@
+{
+  "name": "Remix pec-complaints",
+  "description": "Accessories Repair & Action Taken Report Management System for tracking repair complaints from intake to verified closure.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
