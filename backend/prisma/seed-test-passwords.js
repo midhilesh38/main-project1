@@ -25,7 +25,12 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const testPassword = process.env.TEST_PASSWORD || "LocalSupervisor!2026";
+
+if (!process.env.TEST_PASSWORD || !process.env.TEST_PASSWORD.trim()) {
+  console.error("TEST_PASSWORD environment variable is required.");
+  process.exit(1);
+}
+const testPassword = process.env.TEST_PASSWORD;
   console.log(`Hashing test password for test accounts...`);
   const passwordHash = await bcrypt.hash(testPassword, 10);
 

@@ -62,7 +62,7 @@ test('Full end-to-end workflow: Login -> Create -> HOD Approve -> Assign -> ATR 
   const createApp = require('../src/app');
   const app = createApp();
 
-  const testPassword = 'LocalSupervisor!2026';
+  const testPassword = process.env.TEST_PASSWORD;
 
   // 1. Test Login for Supervisor, HOD, and Electrician with same password
   const supLogin = await request(app, {
@@ -244,7 +244,7 @@ test('HOD rejects Action Taken Report and sends back for rework', async () => {
   const createApp = require('../src/app');
   const app = createApp();
 
-  const testPassword = 'LocalSupervisor!2026';
+  const testPassword = process.env.TEST_PASSWORD;
 
   const supLogin = await request(app, {
     method: 'POST',
@@ -360,8 +360,7 @@ test('Atomic verify-and-close endpoint works smoothly', async () => {
   const createApp = require('../src/app');
   const app = createApp();
 
-  const testPassword = 'LocalSupervisor!2026';
-
+const testPassword = process.env.TEST_PASSWORD;
   const supLogin = await request(app, {
     method: 'POST',
     path: '/api/auth/login',
@@ -466,7 +465,7 @@ test('Backend rejects complaints with SLA resolution date in the past with 400',
 
   const createApp = require('../src/app');
   const app = createApp();
-  const testPassword = 'LocalSupervisor!2026';
+const testPassword = process.env.TEST_PASSWORD;
 
   const supervisorLogin = await request(app, {
     method: 'POST',
@@ -514,7 +513,7 @@ test('Estate / Campus Manager can track all allocated tickets and real-time exec
 
   const createApp = require('../src/app');
   const app = createApp();
-  const testPassword = 'LocalSupervisor!2026';
+  const testPassword = process.env.TEST_PASSWORD;
 
   // 1. Login as Manager
   const managerLogin = await request(app, {

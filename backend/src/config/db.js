@@ -50,7 +50,11 @@ class InMemoryDatabase {
     };
     this.departments.set(dept1.id, dept1);
 
-    const defaultTestPassword = process.env.TEST_PASSWORD || 'LocalSupervisor!2026';
+
+const defaultTestPassword = process.env.TEST_PASSWORD;
+if (!defaultTestPassword) {
+  throw new Error("TEST_PASSWORD environment variable is strictly required.");
+}
 
     const defaultSeedUsers = [
       {
