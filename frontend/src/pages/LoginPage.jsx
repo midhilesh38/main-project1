@@ -27,17 +27,26 @@ export function LoginPage({ onLoginSuccess }) {
     const val = e.target.value;
     setEmployeeId(val);
 
-    // Auto-select role based on username prefix/pattern
-    const lower = val.toLowerCase().trim();
-    if (lower.startsWith('hod')) {
+    // Normalize input: strip "user-" or "user_" prefix if present
+    let cleanVal = val.toLowerCase().trim();
+    if (cleanVal.startsWith('user-')) {
+      cleanVal = cleanVal.replace('user-', '');
+    } else if (cleanVal.startsWith('user_')) {
+      cleanVal = cleanVal.replace('user_', '');
+    }
+
+    // Auto-select Prisma UserRole enum based on username pattern
+    if (cleanVal.startsWith('hod')) {
       setRole('HOD');
-    } else if (lower.startsWith('electricianhead')) {
+    } else if (cleanVal.startsWith('electricianhead') || cleanVal.startsWith('elec_head') || cleanVal.startsWith('elechead')) {
       setRole('ELECTRICIAN_HEAD');
-    } else if (lower.startsWith('electrician')) {
+    } else if (cleanVal.startsWith('electricianincharge') || cleanVal.startsWith('elec_inc') || cleanVal.startsWith('elecincharge')) {
+      setRole('ELECTRICIAN_INCHARGE');
+    } else if (cleanVal.startsWith('electrician') || cleanVal.startsWith('elec')) {
       setRole('ELECTRICIAN');
-    } else if (lower.startsWith('manager')) {
+    } else if (cleanVal.startsWith('manager') || cleanVal.startsWith('mgr')) {
       setRole('MANAGER');
-    } else if (lower.startsWith('supervisor') || lower.startsWith('sup')) {
+    } else if (cleanVal.startsWith('supervisor') || cleanVal.startsWith('sup')) {
       setRole('SUPERVISOR');
     }
   };
@@ -126,6 +135,7 @@ export function LoginPage({ onLoginSuccess }) {
                 options={[
                   { value: 'SUPERVISOR', label: 'Staff / Department Supervisor' },
                   { value: 'HOD', label: 'Head of Department (HOD)' },
+                  { value: 'ELECTRICIAN_INCHARGE', label: 'Electrician In-Charge' },
                   { value: 'ELECTRICIAN_HEAD', label: 'Electrician Head / Maintenance Cell' },
                   { value: 'ELECTRICIAN', label: 'Field Electrician / Technician' },
                   { value: 'MANAGER', label: 'Estate / Facility Manager' },
