@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService, DEMO_USERS } from '../services/authService';
+import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -43,7 +43,6 @@ export function AuthProvider({ children }) {
         loading,
         login: loginWithCredentials,
         logout,
-        demoUsers: DEMO_USERS,
       }}
     >
       {children}

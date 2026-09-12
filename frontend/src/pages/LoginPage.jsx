@@ -6,39 +6,49 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  Building,
-  KeyRound,
-  CheckCircle2,
-  HelpCircle,
 } from 'lucide-react';
 import { PanimalarLogo, AnniversaryBadge } from '../components/PanimalarLogo';
 import { Button } from '../components/Button';
 import { Input, Select } from '../components/Input';
-import { DEMO_USERS } from '../services/authService';
 
 export function LoginPage({ onLoginSuccess }) {
-  const [employeeId, setEmployeeId] = useState('supervisor1');
-  const [password, setPassword] = useState('LocalSupervisor!2026');
+  const [employeeId, setEmployeeId] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState('SUPERVISOR');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleRoleSelectChange = (e) => {
-    const selectedRole = e.target.value;
-    setRole(selectedRole);
-    const demo = DEMO_USERS.find((u) => u.role === selectedRole);
-    if (demo) {
-      setEmployeeId(demo.username);
-      setPassword(demo.password);
-    }
+    setRole(e.target.value);
   };
 
-  const handleQuickFill = (demo) => {
-    setRole(demo.role);
-    setEmployeeId(demo.username);
-    setPassword(demo.password);
-    setError(null);
+  const handleUsernameChange = (e) => {
+    const val = e.target.value;
+    setEmployeeId(val);
+
+    // Normalize input: strip "user-" or "user_" prefix if present
+    let cleanVal = val.toLowerCase().trim();
+    if (cleanVal.startsWith('user-')) {
+      cleanVal = cleanVal.replace('user-', '');
+    } else if (cleanVal.startsWith('user_')) {
+      cleanVal = cleanVal.replace('user_', '');
+    }
+
+    // Auto-select Prisma UserRole enum based on username pattern
+    if (cleanVal.startsWith('hod')) {
+      setRole('HOD');
+    } else if (cleanVal.startsWith('electricianhead') || cleanVal.startsWith('elec_head') || cleanVal.startsWith('elechead')) {
+      setRole('ELECTRICIAN_HEAD');
+    } else if (cleanVal.startsWith('electricianincharge') || cleanVal.startsWith('elec_inc') || cleanVal.startsWith('elecincharge')) {
+      setRole('ELECTRICIAN_INCHARGE');
+    } else if (cleanVal.startsWith('electrician') || cleanVal.startsWith('elec')) {
+      setRole('ELECTRICIAN');
+    } else if (cleanVal.startsWith('manager') || cleanVal.startsWith('mgr')) {
+      setRole('MANAGER');
+    } else if (cleanVal.startsWith('supervisor') || cleanVal.startsWith('sup')) {
+      setRole('SUPERVISOR');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -125,6 +135,7 @@ export function LoginPage({ onLoginSuccess }) {
                 options={[
                   { value: 'SUPERVISOR', label: 'Staff / Department Supervisor' },
                   { value: 'HOD', label: 'Head of Department (HOD)' },
+                  { value: 'ELECTRICIAN_INCHARGE', label: 'Electrician In-Charge' },
                   { value: 'ELECTRICIAN_HEAD', label: 'Electrician Head / Maintenance Cell' },
                   { value: 'ELECTRICIAN', label: 'Field Electrician / Technician' },
                   { value: 'MANAGER', label: 'Estate / Facility Manager' },
@@ -137,8 +148,8 @@ export function LoginPage({ onLoginSuccess }) {
                 id="employee-id-input"
                 type="text"
                 value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
-                placeholder="e.g. supervisor1 or SUP001"
+                onChange={handleUsernameChange}
+                placeholder="Enter Employee ID / Username"
                 required
                 icon={User}
                 autoComplete="username"
@@ -178,35 +189,6 @@ export function LoginPage({ onLoginSuccess }) {
                 Sign In to PEC-RMMS
               </Button>
             </form>
-
-            {/* Quick Demo Credentials Preset Bar for Testing */}
-            <div className="pt-4 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                  <KeyRound className="w-3.5 h-3.5 text-[#1a365d]" />
-                  Quick-Fill Demo Credentials
-                </span>
-                <span className="text-[10px] text-slate-400">Click to load</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-1.5">
-                {DEMO_USERS.map((demo) => (
-                  <button
-                    key={demo.role}
-                    type="button"
-                    onClick={() => handleQuickFill(demo)}
-                    className={`px-2.5 py-1.5 rounded text-left border text-[11px] transition-all ${
-                      role === demo.role && employeeId === demo.username
-                        ? 'bg-blue-50/80 border-[#1a365d] text-[#1a365d] font-bold'
-                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <p className="truncate font-semibold">{demo.roleLabel.split('/')[0]}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">{demo.username}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Institutional Footer */}

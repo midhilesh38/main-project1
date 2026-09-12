@@ -14,8 +14,13 @@ const authenticate = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
+    const secret = process.env.JWT_SECRET;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured in environment.');
+    }
+
+    const decoded = jwt.verify(token, secret);
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -46,7 +51,11 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    req.user = user;
+    // Attach normalized user
+    req.user = {
+      ...user,
+      role: user.role ? String(user.role).toUpperCase() : user.role,
+    };
 
     next();
   } catch (error) {
@@ -69,10 +78,14 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-// 2. Role-Based Access Control (RBAC)
+// 2. Role-Based Access Control (RBAC) with Case Normalization
 const authorizeRoles = (...allowedRoles) => {
+  const normalizedAllowed = allowedRoles.map((r) => String(r).toUpperCase());
+
   return (req, res, next) => {
-    if (!req.user || !req.user.role || !allowedRoles.includes(req.user.role)) {
+    const userRole = req.user && req.user.role ? String(req.user.role).toUpperCase() : null;
+
+    if (!userRole || !normalizedAllowed.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: `Forbidden: Access restricted to roles: ${allowedRoles.join(', ')}`,

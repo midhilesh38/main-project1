@@ -25,13 +25,18 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const commonTestPassword = process.env.TEST_PASSWORD || "LocalSupervisor!2026";
+  const basePassword = process.env.TEST_PASSWORD;
+
+  if (!basePassword && (!process.env.SEED_SUPERVISOR_PASSWORD || !process.env.SEED_HOD_PASSWORD)) {
+    console.error("Error: TEST_PASSWORD or specific SEED_*_PASSWORD environment variables must be defined to run seed.");
+    process.exit(1);
+  }
 
   const users = [
     {
       employeeId: "SUP001",
       username: "supervisor1",
-      password: process.env.SEED_SUPERVISOR_PASSWORD || commonTestPassword,
+      password: process.env.SEED_SUPERVISOR_PASSWORD || basePassword,
       fullName: "Test Supervisor",
       email: "supervisor1@test.com",
       role: "SUPERVISOR",
@@ -39,7 +44,7 @@ async function main() {
     {
       employeeId: "HOD001",
       username: "hod1",
-      password: process.env.SEED_HOD_PASSWORD || commonTestPassword,
+      password: process.env.SEED_HOD_PASSWORD || basePassword,
       fullName: "Test HOD",
       email: "hod1@test.com",
       role: "HOD",
@@ -47,7 +52,7 @@ async function main() {
     {
       employeeId: "EH001",
       username: "electricianhead1",
-      password: process.env.SEED_ELECTRICIAN_HEAD_PASSWORD || commonTestPassword,
+      password: process.env.SEED_ELECTRICIAN_HEAD_PASSWORD || basePassword,
       fullName: "Test Electrician Head",
       email: "electricianhead1@test.com",
       role: "ELECTRICIAN_HEAD",
@@ -55,7 +60,7 @@ async function main() {
     {
       employeeId: "EL001",
       username: "electrician1",
-      password: process.env.SEED_ELECTRICIAN_1_PASSWORD || commonTestPassword,
+      password: process.env.SEED_ELECTRICIAN_1_PASSWORD || basePassword,
       fullName: "Test Electrician 1",
       email: "electrician1@test.com",
       role: "ELECTRICIAN",
@@ -63,7 +68,7 @@ async function main() {
     {
       employeeId: "EL002",
       username: "electrician2",
-      password: process.env.SEED_ELECTRICIAN_2_PASSWORD || commonTestPassword,
+      password: process.env.SEED_ELECTRICIAN_2_PASSWORD || basePassword,
       fullName: "Test Electrician 2",
       email: "electrician2@test.com",
       role: "ELECTRICIAN",
@@ -95,13 +100,11 @@ async function main() {
   }
 
   console.log("Seed completed successfully.");
-  console.log("Created/updated 5 test users.");
-  console.log(`All test users set with password from TEST_PASSWORD (default: "${commonTestPassword}").`);
 }
 
 main()
   .catch((error) => {
-    console.error("Seed failed:", error);
+    console.error("Seed failed:", error.message);
     process.exit(1);
   })
   .finally(async () => {

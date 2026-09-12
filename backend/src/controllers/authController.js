@@ -14,10 +14,7 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Check cross-field uniqueness:
-    // - employeeId must not collide with any employeeId OR username
-    // - username must not collide with any username OR employeeId
-    // - email must not collide with any existing email
+    // Check cross-field uniqueness
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
@@ -70,23 +67,21 @@ exports.register = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error('Register Error:', error);
+    console.error('Register Error:', error.message);
 
-    // P2003: Foreign key constraint violation (invalid/nonexistent departmentId)
     if (error.code === 'P2003') {
       return res.status(400).json({
         message: 'Invalid departmentId: The specified department does not exist.',
       });
     }
 
-    // P2002: Unique constraint violation fallback
     if (error.code === 'P2002') {
       return res.status(409).json({
         message: `A user with this ${error.meta?.target?.[0] || 'field'} already exists.`,
       });
     }
 
-    res.status(500).json({ message: 'Registration failed', error: error.message });
+    res.status(500).json({ message: 'Registration failed' });
   }
 };
 
@@ -131,10 +126,10 @@ exports.login = async (req, res) => {
       });
     }
 
-    // If role was explicitly specified, check if it matches the user's role
-    if (role && user.role !== role) {
-      // In case role mismatch, provide clear message
-      console.warn(`User ${identifier} attempted login with role ${role}, actual role: ${user.role}`);
+    // Role check normalization (case-insensitive)
+    const normalizedUserRole = user.role ? String(user.role).toUpperCase() : '';
+    if (role && normalizedUserRole !== String(role).toUpperCase()) {
+      console.warn(`Role mismatch during login for user ID ${user.id}`);
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
@@ -145,14 +140,19 @@ exports.login = async (req, res) => {
       });
     }
 
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured in the environment.');
+    }
+
     const token = jwt.sign(
       {
         userId: user.id,
-        role: user.role,
+        role: normalizedUserRole,
         employeeId: user.employeeId,
         departmentId: user.departmentId,
       },
-      process.env.JWT_SECRET || 'pec-repair-super-secret-jwt-key-2026',
+      secret,
       { expiresIn: '7d' }
     );
 
@@ -166,13 +166,13 @@ exports.login = async (req, res) => {
         username: user.username,
         fullName: user.fullName,
         email: user.email,
-        role: user.role,
+        role: normalizedUserRole,
         department: user.department,
       },
     });
   } catch (error) {
-    console.error('Login Error:', error);
-    res.status(500).json({ success: false, message: 'Login failed', error: error.message });
+    console.error('Login Error:', error.message);
+    res.status(500).json({ success: false, message: 'Login failed' });
   }
 };
 
@@ -181,8 +181,9 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
+    const userId = req.user.userId || req.user.id;
     const user = await prisma.user.findUnique({
-      where: { id: req.user.userId || req.user.id },
+      where: { id: userId },
       select: {
         id: true,
         employeeId: true,
@@ -204,10 +205,13 @@ exports.getMe = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      user,
+      user: {
+        ...user,
+        role: user.role ? String(user.role).toUpperCase() : user.role,
+      },
     });
   } catch (error) {
-    console.error('GetMe Error:', error);
-    res.status(500).json({ message: 'Failed to fetch user profile', error: error.message });
+    console.error('GetMe Error:', error.message);
+    res.status(500).json({ message: 'Failed to fetch user profile' });
   }
 };
