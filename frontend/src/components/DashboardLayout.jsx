@@ -20,7 +20,7 @@ export function DashboardLayout() {
     if (permittedItems.length > 0 && !permittedItems.some((item) => item.id === activePage)) {
       setActivePage(permittedItems[0].id);
     }
-  }, [userRole]);
+  }, [userRole ,activePage, permittedItems]);
 
   const handleNavigate = (pageId) => {
     setActivePage(pageId);

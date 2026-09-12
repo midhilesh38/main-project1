@@ -5,7 +5,7 @@ import { Button } from './Button';
 export function EmptyState({
   title = 'No Records Found',
   description = 'There are no active entries matching your current filters.',
-  icon: Icon = Inbox,
+  icon = Inbox,
   actionLabel,
   onAction,
   className = '',
@@ -13,7 +13,7 @@ export function EmptyState({
   return (
     <div className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-white rounded-xl border border-dashed border-slate-300 ${className}`}>
       <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3 border border-slate-200">
-        <Icon className="w-6 h-6" />
+        {React.createElement(icon, { className: 'w-6 h-6' })}
       </div>
       <h3 className="text-base font-bold text-slate-800 tracking-tight">{title}</h3>
       <p className="text-sm text-slate-500 max-w-md mt-1 mb-5">{description}</p>

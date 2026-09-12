@@ -27,7 +27,7 @@ export const complaintService = {
   async getMyComplaints(token) {
     try {
       return await api.getMyComplaints(token);
-    } catch (err) {
+    } catch {
       // fallback to getComplaints with my query param if needed
       return await api.getComplaints(token, { my: true });
     }

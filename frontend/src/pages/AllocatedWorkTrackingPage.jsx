@@ -32,7 +32,7 @@ import { EmptyState, LoadingSkeleton } from '../components/EmptyState';
 import { ticketService } from '../services/ticketService';
 import { useToast } from '../components/Toast';
 
-export function AllocatedWorkTrackingPage({ token, user }) {
+export function AllocatedWorkTrackingPage({ token}) {
   const { showSuccess, showError } = useToast();
 
   const [allocations, setAllocations] = useState([]);
@@ -79,15 +79,6 @@ export function AllocatedWorkTrackingPage({ token, user }) {
       }
     });
     return Array.from(map.entries()).map(([id, name]) => ({ value: id, label: name }));
-  }, [allocations]);
-
-  const buildingOptions = useMemo(() => {
-    const set = new Set();
-    allocations.forEach((a) => {
-      const b = a.complaint?.locationBuilding;
-      if (b) set.add(b);
-    });
-    return Array.from(set).map((b) => ({ value: b, label: b }));
   }, [allocations]);
 
   // Metrics summary
@@ -433,20 +424,16 @@ export function AllocatedWorkTrackingPage({ token, user }) {
                     const sla = getSlaStatus(complaint.slaDueAt);
 
                     // Compute clean execution badge state
-                    let executionStatus = item.status;
                     let executionLabel = 'Allocated';
                     let executionBadgeClass = 'bg-blue-50 text-blue-800 border-blue-200';
 
                     if (complaint.status === 'CLOSED' || complaint.status === 'RESOLVED') {
-                      executionStatus = 'RESOLVED';
                       executionLabel = 'Closed & Verified';
                       executionBadgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
                     } else if (item.status === 'COMPLETED' || item.status === 'WORK_COMPLETED' || (complaint.atrs && complaint.atrs.length > 0)) {
-                      executionStatus = 'COMPLETED';
                       executionLabel = 'ATR Submitted (Done)';
                       executionBadgeClass = 'bg-teal-50 text-teal-800 border-teal-200';
                     } else if (item.status === 'IN_PROGRESS') {
-                      executionStatus = 'IN_PROGRESS';
                       executionLabel = 'In Progress (Active)';
                       executionBadgeClass = 'bg-purple-50 text-purple-800 border-purple-200 animate-pulse';
                     }
