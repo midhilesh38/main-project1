@@ -35,6 +35,7 @@ class InMemoryDatabase {
     this.actionTakenReports = new Map();
     this.verifications = new Map();
     this.statusHistories = new Map();
+    this.auditLogs = new Map();
 
     this.seed();
     this.setupModels();
@@ -613,6 +614,55 @@ if (!defaultTestPassword) {
         Object.assign(existing, data);
         self.assignments.set(existing.id, existing);
         return populateAssignment(existing, include);
+      },
+    };
+    this.auditLog = {
+      create: async ({ data } = {}) => {
+        const id =
+          data.id ||
+          `audit-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+
+        const auditLog = {
+          id,
+          complaintId: data.complaintId || null,
+          userId: data.userId || null,
+          action: data.action,
+          description: data.description || null,
+          oldValue: data.oldValue || null,
+          newValue: data.newValue || null,
+          createdAt: new Date(),
+        };
+
+        self.auditLogs.set(id, auditLog);
+        return auditLog;
+      },
+
+      findMany: async ({ where, orderBy } = {}) => {
+        let results = Array.from(self.auditLogs.values());
+
+        if (where?.complaintId) {
+          results = results.filter(
+            (log) => log.complaintId === where.complaintId
+          );
+        }
+
+        if (where?.userId) {
+          results = results.filter(
+            (log) => log.userId === where.userId
+          );
+        }
+
+        if (orderBy?.createdAt === 'desc') {
+          results.sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+        } else if (orderBy?.createdAt === 'asc') {
+          results.sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          );
+        }
+
+        return results;
       },
     };
 

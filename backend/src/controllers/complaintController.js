@@ -195,6 +195,7 @@ const createComplaint = async (req, res) => {
       contactPhone,
       locationIntercom,
     } = req.body;
+
     const reporterId = req.user.id;
 
     if (!title || !description || !category || !slaDueAt) {
@@ -205,6 +206,7 @@ const createComplaint = async (req, res) => {
     }
 
     const slaDate = new Date(slaDueAt);
+
     if (isNaN(slaDate.getTime())) {
       return res.status(400).json({
         status: 'error',
@@ -213,12 +215,25 @@ const createComplaint = async (req, res) => {
     }
 
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    ).getTime();
+
     let targetTime = slaDate.getTime();
-    if (typeof slaDueAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(slaDueAt.trim())) {
+
+    if (
+      typeof slaDueAt === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(slaDueAt.trim())
+    ) {
       const [year, month, day] = slaDueAt.trim().split('-').map(Number);
-      targetTime = new Date(year, month - 1, day).getTime();
+
+      targetTime = new Date(
+        year,
+        month - 1,
+        day
+      ).getTime();
     }
 
     if (targetTime < todayStart) {
@@ -230,31 +245,49 @@ const createComplaint = async (req, res) => {
 
     const ticketNumber = `CMP-${Date.now()}`;
 
-    const complaint = await prisma.complaint.create({
-      data: {
-        ticketNumber,
-        title,
-        description,
-        category,
-        priority: priority || 'MEDIUM',
-        reporterId,
-        departmentId: departmentId || null,
-        equipmentId: equipmentId || null,
-        locationBuilding: locationBuilding || null,
-        floorArea: floorArea || null,
-        roomAreaNumber: roomAreaNumber || null,
-        requesterContact: requesterContact || contactPhone || null,
-        locationIntercom: locationIntercom || null,
-        slaDueAt: new Date(slaDueAt),
-      },
+    // Complaint creation and audit log are performed together.
+    const result = await prisma.$transaction(async (tx) => {
+      const complaint = await tx.complaint.create({
+        data: {
+          ticketNumber,
+          title,
+          description,
+          category,
+          priority: priority || 'MEDIUM',
+          reporterId,
+          departmentId: departmentId || null,
+          equipmentId: equipmentId || null,
+          locationBuilding: locationBuilding || null,
+          floorArea: floorArea || null,
+          roomAreaNumber: roomAreaNumber || null,
+          requesterContact: requesterContact || contactPhone || null,
+          locationIntercom: locationIntercom || null,
+          slaDueAt: new Date(slaDueAt),
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          complaintId: complaint.id,
+          userId: reporterId,
+          action: 'CREATED',
+          description: 'Complaint created',
+          newValue: JSON.stringify({
+            status: complaint.status,
+            ticketNumber: complaint.ticketNumber,
+          }),
+        },
+      });
+
+      return complaint;
     });
 
     return res.status(201).json({
       success: true,
       status: 'success',
       message: 'Complaint created successfully',
-      complaint,
-      data: complaint,
+      complaint: result,
+      data: result,
     });
   } catch (error) {
     console.error('Create complaint error:', error);

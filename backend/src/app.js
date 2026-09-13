@@ -11,6 +11,7 @@ const authRoutes = require('./routes/authRoutes');
 const approvalRoutes = require('./routes/approvalRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const createApp = () => {
   const app = express();
@@ -35,6 +36,7 @@ const createApp = () => {
   app.use('/api/jobs', jobRoutes);
   app.use('/api/tickets', ticketRoutes);
   app.use('/api/verifications', verificationRoutes);
+  app.use('/api/users', userRoutes);
 
   // Serve Frontend Assets in production / built mode
   const candidateDistPaths = [

@@ -1,6 +1,7 @@
 const prisma = require('../config/db');
 
 const ACTIVE_ASSIGNMENT_STATUSES = ['ASSIGNED', 'IN_PROGRESS'];
+
 const ASSIGNMENT_ROLES = [
   'SUPERVISOR',
   'HOD',
@@ -277,6 +278,22 @@ const assignElectrician = async (req, res) => {
           status: 'REPAIR_ASSIGNED',
           remarks: remarks || 'Electrician assigned',
           changedById: assignedById,
+        },
+      });
+
+      // Audit electrician assignment.
+      await tx.auditLog.create({
+        data: {
+          complaintId,
+          userId: assignedById,
+          action: 'ASSIGNED',
+          description: 'Electrician assigned to complaint',
+          oldValue: complaint.status,
+          newValue: JSON.stringify({
+            status: 'REPAIR_ASSIGNED',
+            electricianId: electrician.id,
+            electricianName: electrician.fullName,
+          }),
         },
       });
 

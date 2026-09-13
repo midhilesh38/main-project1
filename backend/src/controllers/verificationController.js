@@ -126,6 +126,7 @@ const verifyComplaint = async (req, res) => {
       });
 
       const newStatus = isVerified ? 'VERIFICATION' : 'ACTION_TAKEN';
+
       const updatedComplaint = await tx.complaint.update({
         where: { id: complaintId },
         data: {
@@ -139,8 +140,26 @@ const verifyComplaint = async (req, res) => {
         data: {
           complaintId,
           status: newStatus,
-          remarks: remarks || (isVerified ? 'Repair verified' : 'Repair verification rejected'),
+          remarks:
+            remarks ||
+            (isVerified
+              ? 'Repair verified'
+              : 'Repair verification rejected'),
           changedById: verifierId,
+        },
+      });
+
+      // Verification is also recorded in AuditLog.
+      await tx.auditLog.create({
+        data: {
+          complaintId,
+          userId: verifierId,
+          action: isVerified ? 'VERIFIED' : 'UPDATED',
+          description: isVerified
+            ? 'Complaint repair verified'
+            : 'Complaint verification rejected',
+          oldValue: complaint.status,
+          newValue: newStatus,
         },
       });
 
@@ -152,7 +171,9 @@ const verifyComplaint = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: isVerified ? 'Complaint verified successfully' : 'Complaint verification rejected',
+      message: isVerified
+        ? 'Complaint verified successfully'
+        : 'Complaint verification rejected',
       ...result,
     });
   } catch (error) {
@@ -212,12 +233,14 @@ const closeComplaint = async (req, res) => {
     }
 
     const updatedComplaint = await prisma.$transaction(async (tx) => {
+      const now = new Date();
+
       const closed = await tx.complaint.update({
         where: { id: complaintId },
         data: {
           status: 'CLOSED',
-          closedAt: new Date(),
-          lastUpdatedAt: new Date(),
+          closedAt: now,
+          lastUpdatedAt: now,
         },
       });
 
@@ -227,6 +250,18 @@ const closeComplaint = async (req, res) => {
           status: 'CLOSED',
           remarks: remarks || 'Complaint closed after verification',
           changedById: closedById,
+        },
+      });
+
+      // Audit complaint closure.
+      await tx.auditLog.create({
+        data: {
+          complaintId,
+          userId: closedById,
+          action: 'CLOSED',
+          description: 'Complaint closed after verification',
+          oldValue: complaint.status,
+          newValue: 'CLOSED',
         },
       });
 
@@ -324,6 +359,18 @@ const verifyAndCloseComplaint = async (req, res) => {
         },
       });
 
+      // Audit the atomic verify-and-close action.
+      await tx.auditLog.create({
+        data: {
+          complaintId,
+          userId: verifierId,
+          action: 'CLOSED',
+          description: 'Complaint verified and closed',
+          oldValue: complaint.status,
+          newValue: 'CLOSED',
+        },
+      });
+
       return {
         verification,
         complaint: updatedComplaint,
@@ -352,4 +399,3 @@ module.exports = {
   closeComplaint,
   verifyAndCloseComplaint,
 };
-
