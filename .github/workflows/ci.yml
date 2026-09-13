@@ -2,9 +2,9 @@ name: ci
 
 on:
   pull_request:
-    branches: [main, backend-dev, frontend-dev, database-dev]
+    branches: [develop, main, backend-dev, frontend-dev, database-dev]
   push:
-    branches: [main, backend-dev, frontend-dev, database-dev]
+    branches: [develop, main, backend-dev, frontend-dev, database-dev]
 
 permissions:
   contents: read
@@ -48,8 +48,8 @@ jobs:
         working-directory: backend
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/pec_test
+          TEST_PASSWORD: TestPassword123!
         run: npm test
-
       - name: Backend build check
         working-directory: backend
         env:
