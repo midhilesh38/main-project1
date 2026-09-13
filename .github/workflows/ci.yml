@@ -12,7 +12,6 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
-    if: hashFiles('backend/package-lock.json') != ''
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +57,6 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
-    if: hashFiles('frontend/package-lock.json') != ''
     steps:
       - uses: actions/checkout@v4
 
