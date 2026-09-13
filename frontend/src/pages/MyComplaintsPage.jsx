@@ -35,7 +35,7 @@ import { EmptyState, LoadingSkeleton } from '../components/EmptyState';
 import { complaintService } from '../services/complaintService';
 import { useToast } from '../components/Toast';
 
-export function MyComplaintsPage({ token, user, onNavigateToRaiseComplaint }) {
+export function MyComplaintsPage({ token,onNavigateToRaiseComplaint }) {
   const { showSuccess, showError } = useToast();
 
   const [complaints, setComplaints] = useState([]);

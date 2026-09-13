@@ -48,7 +48,6 @@ export function MyJobsPage({ token, user }) {
   const [atrModalJob, setAtrModalJob] = useState(null);
   const [actionTakenText, setActionTakenText] = useState('');
   const [partsUsed, setPartsUsed] = useState('');
-  const [technicianRemarks, setTechnicianRemarks] = useState('');
   const [isSubmittingAtr, setIsSubmittingAtr] = useState(false);
 
   // Confirm Start Job dialog
@@ -136,7 +135,6 @@ export function MyJobsPage({ token, user }) {
     setAtrModalJob(job);
     setActionTakenText('');
     setPartsUsed('');
-    setTechnicianRemarks('');
   };
 
   const handleSubmitAtr = async (e) => {

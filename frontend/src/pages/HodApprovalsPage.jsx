@@ -32,7 +32,7 @@ import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { approvalService } from '../services/approvalService';
 import { useToast } from '../components/Toast';
 
-export function HodApprovalsPage({ token, user }) {
+export function HodApprovalsPage({ token}) {
   const { showSuccess, showError } = useToast();
 
   // Active Navigation Tab
@@ -502,7 +502,6 @@ export function HodApprovalsPage({ token, user }) {
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {filteredComplaints.map((item) => {
                   const assignedTech = item.assignments?.[0]?.technician;
-                  const isApproved = item.hodApprovalStatus === 'APPROVED';
                   const isRejected = item.hodApprovalStatus === 'REJECTED';
 
                   return (

@@ -22,7 +22,7 @@ import { EmptyState, LoadingSkeleton } from '../components/EmptyState';
 import { ticketService } from '../services/ticketService';
 import { useToast } from '../components/Toast';
 
-export function AssignElectricianPage({ token, user }) {
+export function AssignElectricianPage({ token}) {
   const { showSuccess, showError } = useToast();
 
   const [unassignedTickets, setUnassignedTickets] = useState([]);
