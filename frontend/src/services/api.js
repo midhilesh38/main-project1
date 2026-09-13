@@ -123,6 +123,50 @@ export const getMyComplaints = (token) =>
 export const getComplaintById = (token, id) =>
   request(`/api/complaints/${id}`, { token });
 
+// Attachments
+// NOTE: Endpoint path, HTTP method, and the FormData field name ('file')
+// are placeholders pending Issue #38 (Secure Attachment Upload Backend).
+// Update ATTACHMENT_UPLOAD field name / URL below once that contract lands.
+export const uploadComplaintAttachment = async (token, complaintId, file) => {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/complaints/${complaintId}/attachments`;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // Do NOT set Content-Type manually — the browser sets the
+        // multipart/form-data boundary automatically.
+      },
+      body: formData,
+    });
+  } catch (networkErr) {
+    throw new ApiError(
+      'Backend unavailable. Check VITE_BACKEND_URL and confirm the backend is running.',
+      0,
+      { originalError: networkErr.message }
+    );
+  }
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new ApiError(
+      payload.message || `Attachment upload failed with status ${response.status}`,
+      response.status,
+      payload
+    );
+  }
+
+  return payload;
+};
+
 // HOD Approvals
 export const getPendingApprovals = (token) =>
   request('/api/approvals/pending', { token });

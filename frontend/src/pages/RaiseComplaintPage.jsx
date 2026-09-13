@@ -23,7 +23,9 @@ import { Card, CardHeader, CardBody, CardFooter } from '../components/Card';
 import { Button } from '../components/Button';
 import { Input, Select, Textarea } from '../components/Input';
 import { PriorityBadge, StatusBadge } from '../components/Badge';
+import { AttachmentUpload } from '../components/AttachmentUpload';
 import { complaintService } from '../services/complaintService';
+import { attachmentService, validateAttachmentFile } from '../services/attachmentService';
 import { useToast } from '../components/Toast';
 
 export const BUILDING_INTERCOMS = {
@@ -136,6 +138,11 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedTicket, setSubmittedTicket] = useState(null);
 
+  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [attachmentValidationError, setAttachmentValidationError] = useState(null);
+  const [attachmentUploadStatus, setAttachmentUploadStatus] = useState('idle'); // idle | uploading | success | error
+  const [attachmentUploadError, setAttachmentUploadError] = useState(null);
+
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -185,6 +192,26 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
     }
   };
 
+  const handleAttachmentSelect = (file) => {
+    const validationError = validateAttachmentFile(file);
+    if (validationError) {
+      setAttachmentFile(null);
+      setAttachmentValidationError(validationError);
+      return;
+    }
+    setAttachmentFile(file);
+    setAttachmentValidationError(null);
+    setAttachmentUploadStatus('idle');
+    setAttachmentUploadError(null);
+  };
+
+  const handleAttachmentRemove = () => {
+    setAttachmentFile(null);
+    setAttachmentValidationError(null);
+    setAttachmentUploadStatus('idle');
+    setAttachmentUploadError(null);
+  };
+
   const validateForm = () => {
     const errors = {};
     if (!formData.locationBuilding?.trim()) errors.locationBuilding = 'Building location is required';
@@ -226,11 +253,17 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
     });
     setFormErrors({});
     setSubmittedTicket(null);
+    setAttachmentFile(null);
+    setAttachmentValidationError(null);
+    setAttachmentUploadStatus('idle');
+    setAttachmentUploadError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+    // Guard against double-submits triggering a second upload.
+    if (isSubmitting || attachmentUploadStatus === 'uploading') return;
 
     setIsSubmitting(true);
     try {
@@ -257,6 +290,25 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
         `Ticket #${ticket.ticketNumber || ticket.id} registered successfully. Sent to HOD for approval.`,
         'Complaint Lodged'
       );
+
+      // Attachment upload happens AFTER the complaint exists, since it needs
+      // a complaintId. This is intentionally isolated from the try/catch
+      // above so a failed attachment upload never blocks or rolls back an
+      // already-successful complaint registration.
+      if (attachmentFile && ticket?.id) {
+        setAttachmentUploadStatus('uploading');
+        try {
+          await attachmentService.uploadAttachment(token, ticket.id, attachmentFile);
+          setAttachmentUploadStatus('success');
+        } catch (attachErr) {
+          setAttachmentUploadStatus('error');
+          setAttachmentUploadError(attachErr.message || 'Attachment upload failed');
+          showError(
+            'Complaint was registered, but the attachment failed to upload. You can retry from My Complaints.',
+            'Attachment Upload Failed'
+          );
+        }
+      }
     } catch (err) {
       showError(err.message || 'Failed to register complaint. Please try again.');
     } finally {
@@ -529,11 +581,31 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
               />
             </div>
 
-            {/* Section 4: Contact & Premises Communication */}
+            {/* Section 4: Attachment */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+                <FilePlus className="w-3.5 h-3.5 text-[#1a365d]" />
+                4. Supporting Attachment
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <AttachmentUpload
+                  file={attachmentFile}
+                  onFileSelect={handleAttachmentSelect}
+                  onRemove={handleAttachmentRemove}
+                  validationError={attachmentValidationError}
+                  uploadStatus={attachmentUploadStatus}
+                  uploadError={attachmentUploadError}
+                  disabled={isSubmitting || attachmentUploadStatus === 'uploading'}
+                />
+              </div>
+            </div>
+
+            {/* Section 5: Contact & Premises Communication */}
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 pb-1 border-b border-slate-100 flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-[#1a365d]" />
-                4. Requester & Location Contact Information
+                5. Requester & Location Contact Information
               </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -595,6 +667,7 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
               size="md"
               icon={Send}
               isLoading={isSubmitting}
+              disabled={attachmentUploadStatus === 'uploading'}
               className="w-full sm:w-auto"
             >
               Submit Complaint for HOD Endorsement
