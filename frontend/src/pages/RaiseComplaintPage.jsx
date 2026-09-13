@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FilePlus,
   Building,
@@ -135,6 +135,7 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedTicket, setSubmittedTicket] = useState(null);
+  const submissionLockRef = useRef(false);
 
   useEffect(() => {
     if (user) {
@@ -230,9 +231,14 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (submissionLockRef.current) return;
+
     if (!validateForm()) return;
 
+    submissionLockRef.current = true;
     setIsSubmitting(true);
+
     try {
       const generatedTitle =
         formData.title?.trim() ||
@@ -253,6 +259,7 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
         requesterContact: ticket.requesterContact || formData.requesterContact,
         locationIntercom: ticket.locationIntercom || formData.locationIntercom,
       });
+      clearFormAfterSubmission();
       showSuccess(
         `Ticket #${ticket.ticketNumber || ticket.id} registered successfully. Sent to HOD for approval.`,
         'Complaint Lodged'
@@ -260,8 +267,28 @@ export function RaiseComplaintPage({ token, user, onNavigateToMyComplaints }) {
     } catch (err) {
       showError(err.message || 'Failed to register complaint. Please try again.');
     } finally {
+      submissionLockRef.current = false;
       setIsSubmitting(false);
     }
+  };
+  const clearFormAfterSubmission = () => {
+    const defaultBuilding = 'Main Academic Block';
+
+    setFormData({
+      locationBuilding: defaultBuilding,
+      floorArea: '',
+      roomAreaNumber: '',
+      category: 'ELECTRICAL',
+      priority: 'MEDIUM',
+      slaDueAt: getDefaultSlaDate('MEDIUM'),
+      title: '',
+      description: '',
+      requesterContact: user?.phone || '',
+      locationIntercom: getBuildingIntercom(defaultBuilding),
+      contactEmail: user?.email || '',
+    });
+
+    setFormErrors({});
   };
 
   const copyTicketId = () => {
