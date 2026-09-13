@@ -93,9 +93,10 @@ model Department {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users      User[]
-  complaints Complaint[]
-  equipment  Equipment[]
+  users             User[]
+  complaints        Complaint[]
+  equipment         Equipment[]
+  slaConfigurations SLAConfiguration[]
 }
 
 model User {
@@ -125,6 +126,14 @@ model User {
   notifications      Notification[]
   auditLogs          AuditLog[]
   escalationsRaised  Escalation[]             @relation("EscalationRaisedBy")
+  comments                     Comment[]
+  cancellationRequestsMade     CancellationRequest[] @relation("CancellationRequestedBy")
+  cancellationRequestsReviewed CancellationRequest[] @relation("CancellationReviewedBy")
+  editRequestsMade             EditRequest[]         @relation("EditRequestedBy")
+  editRequestsReviewed         EditRequest[]         @relation("EditReviewedBy")
+  deadlineExtensionsRequested  DeadlineExtension[]  @relation("DeadlineExtensionRequestedBy")
+  deadlineExtensionsApproved   DeadlineExtension[]  @relation("DeadlineExtensionApprovedBy")
+  attachmentsUploaded Attachment[] @relation("AttachmentUploadedBy")
 }
 
 model Equipment {
@@ -190,18 +199,24 @@ model Complaint {
   notifications Notification[]
   verifications Verification[]
   auditLogs     AuditLog[]
+  comments              Comment[]
+  cancellationRequests CancellationRequest[]
+  editRequests         EditRequest[]
+  deadlineExtensions   DeadlineExtension[]
 }
 
 model Attachment {
-  id          String   @id @default(uuid())
-  complaintId String
-  fileName    String
-  fileUrl     String
-  fileType    String?
-  fileSize    Int?
-  uploadedAt  DateTime @default(now())
+  id           String   @id @default(uuid())
+  complaintId  String
+  uploadedById String?
+  fileName     String
+  fileUrl      String
+  fileType     String?
+  fileSize     Int?
+  uploadedAt   DateTime @default(now())
 
-  complaint Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  complaint  Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  uploadedBy User?     @relation("AttachmentUploadedBy", fields: [uploadedById], references: [id])
 }
 
 model Inspection {
@@ -310,4 +325,79 @@ model AuditLog {
 
   complaint Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
   user      User?      @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id          String   @id @default(uuid())
+  complaintId String
+  userId      String
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  complaint Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model CancellationRequest {
+  id            String         @id @default(uuid())
+  complaintId   String
+  requestedById String
+  reason        String
+  status        ApprovalStatus @default(PENDING)
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewRemarks String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  requestedBy User      @relation("CancellationRequestedBy", fields: [requestedById], references: [id])
+  reviewedBy  User?     @relation("CancellationReviewedBy", fields: [reviewedById], references: [id])
+}
+
+model EditRequest {
+  id               String         @id @default(uuid())
+  complaintId      String
+  requestedById    String
+  reason           String
+  requestedChanges String
+  status           ApprovalStatus @default(PENDING)
+  reviewedById     String?
+  reviewedAt       DateTime?
+  reviewRemarks    String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  requestedBy User      @relation("EditRequestedBy", fields: [requestedById], references: [id])
+  reviewedBy  User?     @relation("EditReviewedBy", fields: [reviewedById], references: [id])
+}
+
+model SLAConfiguration {
+  id           String   @id @default(uuid())
+  departmentId String?
+  slaDays      Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  department Department? @relation(fields: [departmentId], references: [id])
+}
+
+model DeadlineExtension {
+  id            String         @id @default(uuid())
+  complaintId   String
+  requestedById String
+  previousDueAt DateTime
+  newDueAt      DateTime
+  reason        String
+  status        ApprovalStatus @default(PENDING)
+  approvedById  String?
+  approvedAt    DateTime?
+  createdAt     DateTime       @default(now())
+
+  complaint  Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  requestedBy User     @relation("DeadlineExtensionRequestedBy", fields: [requestedById], references: [id])
+  approvedBy  User?    @relation("DeadlineExtensionApprovedBy", fields: [approvedById], references: [id])
 }
