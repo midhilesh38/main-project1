@@ -18,7 +18,7 @@ export function getApiBaseUrl() {
       ? import.meta.env?.VITE_BACKEND_URL || import.meta.env?.VITE_API_BASE_URL
       : undefined;
 
-  const currentEnvUrl = envBackendUrl !== undefined ? envBackendUrl : API_BASE_URL;
+  const currentEnvUrl = envBackendUrl ?? '';
 
   if (!currentEnvUrl || currentEnvUrl === '/' || currentEnvUrl === '') {
     return '';
