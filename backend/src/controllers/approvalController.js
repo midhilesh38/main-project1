@@ -40,7 +40,7 @@ exports.getPendingApprovals = async (req, res) => {
 };
 
 // GET /api/approvals/history
-// HOD only: retrieve approved / processed history and tracking for departmental complaints
+// HOD only
 exports.getApprovalHistory = async (req, res) => {
   try {
     const hodId = req.user.id;
@@ -136,7 +136,6 @@ exports.updateApproval = async (req, res) => {
     const { id } = req.params;
     const { status, rejectionReason } = req.body;
 
-    // Validate status
     if (!status || !['APPROVED', 'REJECTED'].includes(status)) {
       return res.status(400).json({
         success: false,
@@ -144,7 +143,6 @@ exports.updateApproval = async (req, res) => {
       });
     }
 
-    // Rejection requires a reason
     if (
       status === 'REJECTED' &&
       (!rejectionReason || !rejectionReason.trim())
@@ -155,7 +153,6 @@ exports.updateApproval = async (req, res) => {
       });
     }
 
-    // Find complaint
     const complaint = await prisma.complaint.findUnique({
       where: { id },
     });
@@ -167,7 +164,6 @@ exports.updateApproval = async (req, res) => {
       });
     }
 
-    // Only pending complaints can be approved/rejected
     if (complaint.hodApprovalStatus !== 'PENDING') {
       return res.status(400).json({
         success: false,
@@ -175,18 +171,36 @@ exports.updateApproval = async (req, res) => {
       });
     }
 
-    // Update approval
-    const updatedComplaint = await prisma.complaint.update({
-      where: { id },
-      data: {
-        hodApprovalStatus: status,
-        hodApprovedById: req.user.id,
-        hodApprovedAt: new Date(),
-        hodRemarks:
-          status === 'REJECTED'
-            ? rejectionReason.trim()
-            : (req.body.remarks || req.body.hodRemarks || null),
-      },
+    // Approval and AuditLog are performed in the same transaction.
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedComplaint = await tx.complaint.update({
+        where: { id },
+        data: {
+          hodApprovalStatus: status,
+          hodApprovedById: req.user.id,
+          hodApprovedAt: new Date(),
+          hodRemarks:
+            status === 'REJECTED'
+              ? rejectionReason.trim()
+              : (req.body.remarks || req.body.hodRemarks || null),
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          complaintId: id,
+          userId: req.user.id,
+          action: status === 'APPROVED' ? 'APPROVED' : 'REJECTED',
+          description:
+            status === 'APPROVED'
+              ? 'Complaint approved by HOD'
+              : 'Complaint rejected by HOD',
+          oldValue: complaint.hodApprovalStatus,
+          newValue: status,
+        },
+      });
+
+      return updatedComplaint;
     });
 
     return res.status(200).json({
@@ -195,7 +209,7 @@ exports.updateApproval = async (req, res) => {
         status === 'APPROVED'
           ? 'Complaint approved successfully.'
           : 'Complaint rejected successfully.',
-      complaint: updatedComplaint,
+      complaint: result,
     });
 
   } catch (error) {
@@ -281,6 +295,7 @@ exports.updateActionReportApproval = async (req, res) => {
     }
 
     const reason = (rejectionReason || remarks || '').trim();
+
     if (status === 'REJECTED' && !reason) {
       return res.status(400).json({
         success: false,
@@ -303,8 +318,8 @@ exports.updateActionReportApproval = async (req, res) => {
       });
     }
 
-    // Check if ATR exists or if complaint is in ACTION_TAKEN status
     let atrs = complaint.atrs || [];
+
     if (atrs.length === 0 && prisma.actionTakenReport?.findMany) {
       atrs = await prisma.actionTakenReport.findMany({
         where: { complaintId: id },
@@ -320,8 +335,11 @@ exports.updateActionReportApproval = async (req, res) => {
 
     const result = await prisma.$transaction(async (tx) => {
       const now = new Date();
-      // When HOD endorses ATR, ticket status updates to CLOSED
-      const newStatus = status === 'APPROVED' ? 'CLOSED' : 'REPAIR_ASSIGNED';
+
+      const newStatus =
+        status === 'APPROVED'
+          ? 'CLOSED'
+          : 'REPAIR_ASSIGNED';
 
       const updatedComplaint = await tx.complaint.update({
         where: { id },
@@ -361,6 +379,21 @@ exports.updateActionReportApproval = async (req, res) => {
         },
       });
 
+      // Audit the final action on the complaint.
+      await tx.auditLog.create({
+        data: {
+          complaintId: id,
+          userId: hodId,
+          action: status === 'APPROVED' ? 'CLOSED' : 'REJECTED',
+          description:
+            status === 'APPROVED'
+              ? 'HOD endorsed Action Taken Report and closed complaint'
+              : 'HOD rejected Action Taken Report',
+          oldValue: complaint.status,
+          newValue: newStatus,
+        },
+      });
+
       return updatedComplaint;
     });
 
@@ -381,4 +414,3 @@ exports.updateActionReportApproval = async (req, res) => {
     });
   }
 };
-

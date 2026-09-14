@@ -221,6 +221,12 @@ test('authorized assignment role can assign an active electrician to an approved
           return data;
         },
       },
+     auditLog: {
+        create: async ({ data }) => {
+          calls.push(['auditLog.create', data]);
+          return data;
+        },
+     },
     }),
   };
   const app = loadAppWithMockPrisma(prisma);
