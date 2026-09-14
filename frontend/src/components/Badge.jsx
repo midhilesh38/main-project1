@@ -1,20 +1,88 @@
 import React from 'react';
+import { getTicketStatusLabel } from '../constants/ticketStatuses';
 
 export function StatusBadge({ status, className = '' }) {
   const normalized = String(status || '').toUpperCase();
 
-  const config = {
-    // Standard Workflow Statuses
-    PENDING: { label: 'Pending HOD Approval', bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200' },
-    COMPLAINT_REGISTERED: { label: 'Registered', bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200' },
-    APPROVED: { label: 'HOD Approved', bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200' },
-    REJECTED: { label: 'Rejected', bg: 'bg-rose-50', text: 'text-rose-800', border: 'border-rose-200' },
-    ASSIGNED: { label: 'Electrician Assigned', bg: 'bg-indigo-50', text: 'text-indigo-800', border: 'border-indigo-200' },
-    IN_PROGRESS: { label: 'In Progress', bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200' },
-    WORK_COMPLETED: { label: 'Work Completed', bg: 'bg-teal-50', text: 'text-teal-800', border: 'border-teal-200' },
-    COMPLETED: { label: 'Completed (ATR Submitted)', bg: 'bg-teal-50', text: 'text-teal-800', border: 'border-teal-200' },
-    VERIFIED: { label: 'Verified', bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200' },
-    CLOSED: { label: 'Closed', bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-300' },
+ const config = {
+    PENDING: {
+      label: 'Pending HOD Approval',
+      bg: 'bg-amber-50',
+      text: 'text-amber-800',
+      border: 'border-amber-200',
+    },
+    COMPLAINT_REGISTERED: {
+      label: getTicketStatusLabel('COMPLAINT_REGISTERED'),
+      bg: 'bg-amber-50',
+      text: 'text-amber-800',
+      border: 'border-amber-200',
+    },
+    APPROVED: {
+      label: getTicketStatusLabel('APPROVED'),
+      bg: 'bg-blue-50',
+      text: 'text-blue-800',
+      border: 'border-blue-200',
+    },
+    REJECTED: {
+      label: 'Rejected',
+      bg: 'bg-rose-50',
+      text: 'text-rose-800',
+      border: 'border-rose-200',
+    },
+    ASSIGNED: {
+      label: getTicketStatusLabel('ASSIGNED'),
+      bg: 'bg-indigo-50',
+      text: 'text-indigo-800',
+      border: 'border-indigo-200',
+    },
+    REPAIR_ASSIGNED: {
+      label: getTicketStatusLabel('REPAIR_ASSIGNED'),
+      bg: 'bg-indigo-50',
+      text: 'text-indigo-800',
+      border: 'border-indigo-200',
+    },
+    IN_PROGRESS: {
+      label: getTicketStatusLabel('IN_PROGRESS'),
+      bg: 'bg-purple-50',
+      text: 'text-purple-800',
+      border: 'border-purple-200',
+    },
+    WORK_COMPLETED: {
+      label: getTicketStatusLabel('WORK_COMPLETED'),
+      bg: 'bg-teal-50',
+      text: 'text-teal-800',
+      border: 'border-teal-200',
+    },
+    COMPLETED: {
+      label: getTicketStatusLabel('COMPLETED'),
+      bg: 'bg-teal-50',
+      text: 'text-teal-800',
+      border: 'border-teal-200',
+    },
+    ACTION_TAKEN: {
+      label: getTicketStatusLabel('ACTION_TAKEN'),
+      bg: 'bg-teal-50',
+      text: 'text-teal-800',
+      border: 'border-teal-200',
+    },
+    VERIFICATION: {
+      label: getTicketStatusLabel('VERIFICATION'),
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-800',
+      border: 'border-emerald-200',
+    },
+    VERIFIED: {
+      label: getTicketStatusLabel('VERIFIED'),
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-800',
+      border: 'border-emerald-200',
+    },
+    CLOSED: {
+      label: getTicketStatusLabel('CLOSED'),
+      bg: 'bg-slate-100',
+      text: 'text-slate-700',
+      border: 'border-slate-300',
+    },
   };
 
   const current = config[normalized] || {
